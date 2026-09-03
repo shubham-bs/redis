@@ -15,29 +15,21 @@ class RespDecoderTest {
     @Test
     void shouldDecodePing() throws Exception {
 
-        String input =
-                "*1\r\n" +
+        String input = "*1\r\n" +
                         "$4\r\n" +
                         "PING\r\n";
 
-        RespValue result = decoder.decode(
-                new ByteArrayInputStream(
-                        input.getBytes(StandardCharsets.UTF_8)
-                )
-        );
+        RespValue result = decoder.decode(new ByteArrayInputStream(
+                        input.getBytes(StandardCharsets.UTF_8)));
 
         RespValue.Array array = assertInstanceOf(
-                RespValue.Array.class,
-                result
-        );
+                RespValue.Array.class, result);
 
         assertEquals(1, array.values().size());
 
-        RespValue.BulkString command =
-                assertInstanceOf(
+        RespValue.BulkString command = assertInstanceOf(
                         RespValue.BulkString.class,
-                        array.values().get(0)
-                );
+                        array.values().get(0));
 
         assertEquals("PING", command.value());
     }
@@ -45,8 +37,7 @@ class RespDecoderTest {
     @Test
     void shouldDecodeSetCommand() throws Exception {
 
-        String input =
-                "*3\r\n" +
+        String input = "*3\r\n" +
                         "$3\r\n" +
                         "SET\r\n" +
                         "$3\r\n" +
@@ -54,37 +45,24 @@ class RespDecoderTest {
                         "$3\r\n" +
                         "bar\r\n";
 
-        RespValue result = decoder.decode(
-                new ByteArrayInputStream(
-                        input.getBytes(StandardCharsets.UTF_8)
-                )
-        );
+        RespValue result = decoder.decode(new ByteArrayInputStream(
+                        input.getBytes(StandardCharsets.UTF_8)));
 
         assertEquals(
-                new RespValue.Array(
-                        List.of(
+                new RespValue.Array(List.of(
                                 new RespValue.BulkString("SET"),
                                 new RespValue.BulkString("foo"),
                                 new RespValue.BulkString("bar")
-                        )
-                ),
-                result
-        );
+                        )), result);
     }
 
     @Test
     void shouldDecodeInteger() throws Exception {
 
-        RespValue result = decoder.decode(
-                new ByteArrayInputStream(
-                        ":123\r\n".getBytes(StandardCharsets.UTF_8)
-                )
-        );
+        RespValue result = decoder.decode(new ByteArrayInputStream(
+                        ":123\r\n".getBytes(StandardCharsets.UTF_8)));
 
-        assertEquals(
-                new RespValue.IntegerValue(123),
-                result
-        );
+        assertEquals(new RespValue.IntegerValue(123), result);
     }
 
     @Test
@@ -92,13 +70,8 @@ class RespDecoderTest {
 
         RespValue result = decoder.decode(
                 new ByteArrayInputStream(
-                        "$-1\r\n".getBytes(StandardCharsets.UTF_8)
-                )
-        );
+                        "$-1\r\n".getBytes(StandardCharsets.UTF_8)));
 
-        assertInstanceOf(
-                RespValue.NullValue.class,
-                result
-        );
+        assertInstanceOf(RespValue.NullValue.class, result);
     }
 }

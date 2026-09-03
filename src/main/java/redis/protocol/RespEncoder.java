@@ -31,26 +31,22 @@ public class RespEncoder {
         }
     }
 
-    private void writeSimpleString(String value, OutputStream output)
-            throws IOException {
+    private void writeSimpleString(String value, OutputStream output) throws IOException {
 
         write("+" + value + "\r\n", output);
     }
 
-    private void writeError(String value, OutputStream output)
-            throws IOException {
+    private void writeError(String value, OutputStream output) throws IOException {
 
         write("-" + value + "\r\n", output);
     }
 
-    private void writeInteger(long value, OutputStream output)
-            throws IOException {
+    private void writeInteger(long value, OutputStream output) throws IOException {
 
         write(":" + value + "\r\n", output);
     }
 
-    private void writeBulkString(String value, OutputStream output)
-            throws IOException {
+    private void writeBulkString(String value, OutputStream output) throws IOException {
 
         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
 
@@ -59,8 +55,7 @@ public class RespEncoder {
         write("\r\n", output);
     }
 
-    private void writeArray(RespValue.Array array, OutputStream output)
-            throws IOException {
+    private void writeArray(RespValue.Array array, OutputStream output) throws IOException {
 
         write("*" + array.values().size() + "\r\n", output);
 
@@ -69,8 +64,7 @@ public class RespEncoder {
         }
     }
 
-    private void write(String value, OutputStream output)
-            throws IOException {
+    private void write(String value, OutputStream output) throws IOException {
 
         output.write(value.getBytes(StandardCharsets.UTF_8));
     }

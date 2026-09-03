@@ -17,15 +17,9 @@ class RespEncoderTest {
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        encoder.encode(
-                new RespValue.SimpleString("OK"),
-                output
-        );
+        encoder.encode(new RespValue.SimpleString("OK"), output);
 
-        assertEquals(
-                "+OK\r\n",
-                output.toString(StandardCharsets.UTF_8)
-        );
+        assertEquals("+OK\r\n", output.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -33,15 +27,10 @@ class RespEncoderTest {
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
-        encoder.encode(
-                new RespValue.Error("ERR something went wrong"),
-                output
-        );
+        encoder.encode(new RespValue.Error("ERR something went wrong"), output);
 
-        assertEquals(
-                "-ERR something went wrong\r\n",
-                output.toString(StandardCharsets.UTF_8)
-        );
+        assertEquals("-ERR something went wrong\r\n",
+                output.toString(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -54,8 +43,7 @@ class RespEncoderTest {
                 output
         );
 
-        assertEquals(
-                ":123\r\n",
+        assertEquals(":123\r\n",
                 output.toString(StandardCharsets.UTF_8)
         );
     }
