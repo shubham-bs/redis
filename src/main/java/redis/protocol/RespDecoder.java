@@ -9,28 +9,48 @@ import java.util.List;
 
 public class RespDecoder {
 
+    private static final int MAX_LINE_LENGTH = 64 * 1024;
+    private static final int MAX_BULK_STRING_LENGTH = 10 * 1024 * 1024;
+    private static final int MAX_ARRAY_LENGTH = 1_000_000;
+
     public RespValue decode(InputStream input) throws IOException {
         int type = input.read();
 
         if (type == -1) throw new EOFException("Connection closed");
 
         return switch (type) {
-
             case '+' -> new RespValue.SimpleString(readLine(input));
             case '-' -> new RespValue.Error(readLine(input));
-            case ':' -> new RespValue.IntegerValue(Long.parseLong(readLine(input)));
+            case ':' -> decodeInteger(input);
             case '$' -> decodeBulkString(input);
             case '*' -> decodeArray(input);
             default -> throw new IOException("Unknown RESP type: " + (char) type);
         };
     }
 
-    private RespValue decodeBulkString(InputStream input) throws IOException {
+    private RespValue decodeInteger(InputStream input) throws IOException {
+        String line = readLine(input);
 
-        int length = Integer.parseInt(readLine(input));
+        try {
+            return new RespValue.IntegerValue(Long.parseLong(line));
+        } catch (NumberFormatException e) {
+            throw new IOException("Invalid integer", e);
+        }
+    }
+
+    private RespValue decodeBulkString(InputStream input) throws IOException {
+        String lengthLine = readLine(input);
+        int length;
+
+        try {
+            length = Integer.parseInt(lengthLine);
+        } catch (NumberFormatException e) {
+            throw new IOException("Invalid bulk string length", e);
+        }
 
         if (length == -1) return new RespValue.NullValue();
         if (length < -1) throw new IOException("Invalid bulk string length");
+        if (length > MAX_BULK_STRING_LENGTH) throw new IOException("Bulk string too large");
 
         byte[] data = readExactly(input, length);
 
@@ -40,11 +60,18 @@ public class RespDecoder {
     }
 
     private RespValue decodeArray(InputStream input) throws IOException {
+        String countLine = readLine(input);
+        int count;
 
-        int count = Integer.parseInt(readLine(input));
+        try {
+            count = Integer.parseInt(countLine);
+        } catch (NumberFormatException e) {
+            throw new IOException("Invalid array length", e);
+        }
 
         if (count == -1) return new RespValue.NullValue();
         if (count < -1) throw new IOException("Invalid array length");
+        if (count > MAX_ARRAY_LENGTH) throw new IOException("Array too large");
 
         List<RespValue> values = new ArrayList<>(count);
 
@@ -56,7 +83,6 @@ public class RespDecoder {
     }
 
     private String readLine(InputStream input) throws IOException {
-
         StringBuilder result = new StringBuilder();
 
         while (true) {
@@ -66,11 +92,17 @@ public class RespDecoder {
 
             if (current == '\r') {
                 int next = input.read();
+
                 if (next != '\n') throw new IOException("Expected LF after CR");
+
                 return result.toString();
             }
 
+            if (current == '\n') throw new IOException("Unexpected LF");
+
             result.append((char) current);
+
+            if (result.length() > MAX_LINE_LENGTH) throw new IOException("RESP line too long");
         }
     }
 
@@ -82,7 +114,11 @@ public class RespDecoder {
 
         while (offset < length) {
             int bytesRead = input.read(data, offset, length - offset);
+
             if (bytesRead == -1) throw new EOFException("Unexpected end of bulk string");
+
+            if (bytesRead == 0) continue;;
+
             offset += bytesRead;
         }
 
@@ -90,6 +126,7 @@ public class RespDecoder {
     }
 
     private void expectCRLF(InputStream input) throws IOException {
+
         int first = input.read();
         int second = input.read();
 
